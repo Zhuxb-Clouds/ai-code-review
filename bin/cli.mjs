@@ -31,14 +31,28 @@ const HOOK_CONTENT = `#!/bin/sh
 npx ai-review-hook "$1" "$2"
 `;
 
-const ENV_EXAMPLE = `# OpenAI API 配置
-OPENAI_API_KEY=sk-your-api-key-here
-OPENAI_BASE_URL=https://api.openai.com/v1
+const ENV_EXAMPLE = `# AI 提供商选择 (openai / deepseek)
+# AI_PROVIDER=openai
 
-# 可选配置
+# OpenAI API 配置
+OPENAI_API_KEY=sk-your-openai-api-key-here
+# OPENAI_BASE_URL=https://api.openai.com/v1
 # OPENAI_MODEL=gpt-4o-mini
-# AI_REVIEW_MAX_DIFF_SIZE=15000
+
+# DeepSeek API 配置 (使用 AI_PROVIDER=deepseek)
+# DEEPSEEK_API_KEY=sk-your-deepseek-api-key-here
+
+# 代理配置 (可选)
+# HTTPS_PROXY=http://127.0.0.1:7890
+
+# 其他可选配置
 # AI_REVIEW_TIMEOUT=30000
+# AI_REVIEW_MAX_DIFF_SIZE=15000
+# AI_REVIEW_MAX_RETRIES=3
+# AI_REVIEW_RETRY_DELAY=1000
+# AI_REVIEW_VERBOSE=false
+# AI_REVIEW_SKIP_BUILD=false
+# AI_REVIEW_BUILD_COMMAND=npm run build
 `;
 
 function showHelp() {

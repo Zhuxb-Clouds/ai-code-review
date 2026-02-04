@@ -8,7 +8,12 @@
     "ai-review-hook": "./bin/hook.mjs"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "echo '无构建步骤'",
+    "test": "node test/test.mjs",
+    "test:cli": "node bin/cli.mjs",
+    "test:hook": "node bin/hook.mjs .git/COMMIT_EDITMSG",
+    "test:link": "npm link && echo '已全局链接，可在其他项目使用 npx ai-review'",
+    "test:unlink": "npm unlink -g @zhuxb-clouds/ai-code-review"
   },
   "keywords": [
     "git",
@@ -21,6 +26,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "https-proxy-agent": "^7.0.6",
     "openai": "^4.0.0"
   },
   "peerDependencies": {

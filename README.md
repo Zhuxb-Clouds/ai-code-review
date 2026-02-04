@@ -1,6 +1,8 @@
 # AI Code Reviewer & Commit Generator
 
-基于 Node.js 和 OpenAI API 的 Git Hooks 集成方案。在执行 `git commit` 时自动进行代码审查，并根据 Diff 自动生成符合 [Conventional Commits](https://www.conventionalcommits.org/) 规范的提交信息。
+基于 Node.js 和 OpenAI-compatible API 的 Git Hooks 集成方案。在执行 `git commit` 时自动进行代码审查，并根据 Diff 自动生成符合 [Conventional Commits](https://www.conventionalcommits.org/) 规范的提交信息。
+
+**支持的 AI 提供商**: OpenAI, DeepSeek
 
 ## 🚀 核心特性
 
@@ -9,13 +11,15 @@
 - **无感集成**：通过 Git Hooks 实现，无需改变原有开发习惯
 - **成本可控**：支持 Diff 大小限制，避免 Token 浪费
 - **一键安装**：作为 npm 包安装到任何项目
+- **多提供商支持**：支持 OpenAI、DeepSeek 等兼容 API
+- **代理支持**：支持 HTTP/HTTPS/SOCKS5 代理
 
 ---
 
 ## 🛠️ 技术架构
 
 ```
-git commit → Husky (prepare-commit-msg) → ai-review-hook → OpenAI API
+git commit → Husky (prepare-commit-msg) → ai-review-hook → AI API (OpenAI/DeepSeek)
                                                 ↓
                                     ✅ 通过：自动填充 Commit Message
                                     ❌ 失败：拦截提交并输出建议
@@ -43,11 +47,26 @@ npx ai-review init
 cp .env.example .env
 ```
 
-编辑 `.env`：
+#### 使用 OpenAI
 
 ```bash
-OPENAI_API_KEY=sk-your-api-key-here
-OPENAI_BASE_URL=https://api.openai.com/v1  # 可选，用于自定义 API 地址
+AI_PROVIDER=openai
+OPENAI_API_KEY=sk-your-openai-key-here
+OPENAI_MODEL=gpt-4o-mini
+```
+
+#### 使用 DeepSeek
+
+```bash
+AI_PROVIDER=deepseek
+DEEPSEEK_API_KEY=sk-your-deepseek-key-here
+# OPENAI_MODEL=deepseek-chat  # 可选，默认 deepseek-chat
+```
+
+#### 使用代理
+
+```bash
+HTTPS_PROXY=http://127.0.0.1:7890
 ```
 
 > ⚠️ **安全提示**：`.env` 已自动添加到 `.gitignore`，请勿手动提交！
@@ -112,13 +131,34 @@ git commit -m "your message"
 
 通过环境变量配置：
 
-| 环境变量                  | 默认值                      | 说明                                    |
-| ------------------------- | --------------------------- | --------------------------------------- |
-| `OPENAI_API_KEY`          | -                           | **必填**，OpenAI API Key                |
-| `OPENAI_BASE_URL`         | `https://api.openai.com/v1` | 自定义 API 地址                         |
-| `OPENAI_MODEL`            | `gpt-4o-mini`               | 模型，可选 `gpt-4o`、`gpt-3.5-turbo` 等 |
-| `AI_REVIEW_MAX_DIFF_SIZE` | `15000`                     | 最大 Diff 字符数，超出将被截断          |
-| `AI_REVIEW_TIMEOUT`       | `30000`                     | API 请求超时时间（毫秒）                |
+### 基础配置
+
+| 环境变量           | 默认值   | 说明                                                             |
+| ------------------ | -------- | ---------------------------------------------------------------- |
+| `AI_PROVIDER`      | `openai` | AI 提供商：`openai` 或 `deepseek`                                |
+| `OPENAI_API_KEY`   | -        | OpenAI API Key（使用 OpenAI 时必填）                             |
+| `DEEPSEEK_API_KEY` | -        | DeepSeek API Key（使用 DeepSeek 时必填）                         |
+| `OPENAI_BASE_URL`  | 自动设置 | 自定义 API 地址（可覆盖默认）                                    |
+| `OPENAI_MODEL`     | 自动设置 | 模型名称（OpenAI 默认 gpt-4o-mini，DeepSeek 默认 deepseek-chat） |
+
+### 网络配置
+
+| 环境变量      | 默认值 | 说明                       |
+| ------------- | ------ | -------------------------- |
+| `HTTPS_PROXY` | -      | HTTP/HTTPS/SOCKS5 代理地址 |
+| `HTTP_PROXY`  | -      | 同上，备选                 |
+
+### 行为配置
+
+| 环境变量                  | 默认值          | 说明                       |
+| ------------------------- | --------------- | -------------------------- |
+| `AI_REVIEW_MAX_DIFF_SIZE` | `15000`         | 最大 Diff 字符数，超出截断 |
+| `AI_REVIEW_TIMEOUT`       | `30000`         | API 请求超时时间（毫秒）   |
+| `AI_REVIEW_MAX_RETRIES`   | `3`             | 失败时最大重试次数         |
+| `AI_REVIEW_RETRY_DELAY`   | `1000`          | 重试间隔时间（毫秒）       |
+| `AI_REVIEW_VERBOSE`       | `false`         | 启用详细日志               |
+| `AI_REVIEW_SKIP_BUILD`    | `false`         | 跳过构建检查               |
+| `AI_REVIEW_BUILD_COMMAND` | `npm run build` | 构建命令                   |
 
 ---
 
