@@ -326,6 +326,7 @@ async function runAIReview() {
         console.log(`💡 建议: ${result.suggestions}`);
       }
       logTimeEnd(totalTimer);
+      process.exit(0); // 确保成功时返回退出码 0
     } else {
       console.error("❌ AI Review 未通过");
       console.error(`📋 原因: ${result.reason}`);
