@@ -19,10 +19,10 @@
 ## 🛠️ 技术架构
 
 ```
-git commit → Husky (prepare-commit-msg) → ai-review-hook → AI API (OpenAI/DeepSeek)
-                                                ↓
-                                    ✅ 通过：自动填充 Commit Message
-                                    ❌ 失败：拦截提交并输出建议
+git commit → Husky (commit-msg) → ai-review-hook → AI API (OpenAI/DeepSeek)
+                                               ↓
+                                   ✅ 通过：自动填充 Commit Message
+                                   ❌ 失败：拦截提交并输出建议
 ```
 
 ---
@@ -93,11 +93,65 @@ git commit
 ```
 your-project/
 ├── .husky/
-│   └── prepare-commit-msg    # Git Hook（自动创建）
-├── .env                      # API Key（自己创建，不要提交！）
-├── .env.example              # 配置示例（自动创建）
-├── .gitignore                # 已包含 .env
-└── package.json              # 包含 ai-code-review 依赖
+│   └── commit-msg              # Git Hook（自动创建）
+├── .env                       # API Key（自己创建，不要提交！）
+├── .env.example               # 配置示例（自动创建）
+├── .reviewignore              # AI 审查忽略文件（可选）
+├── .reviewignore.example      # 忽略规则示例（自动创建）
+├── .gitignore                 # 已包含 .env
+└── package.json               # 包含 ai-code-review 依赖
+```
+
+---
+
+## 🚫 文件忽略配置 (.reviewignore)
+
+创建 `.reviewignore` 文件来跳过某些文件的 AI 审查，语法类似 `.gitignore`：
+
+```bash
+# 复制示例文件
+cp .reviewignore.example .reviewignore
+```
+
+### 支持的语法
+
+```gitignore
+# 注释
+# 这是一个注释
+
+# 通配符
+package-lock.json   # 匹配特定文件
+*.min.js            # * 匹配任意字符（不包括 /）
+dist/               # 匹配整个目录
+**/*.snap           # ** 匹配任意路径层级
+
+# 否定模式
+*.md                # 忽略所有 markdown
+!README.md          # 但不忽略 README.md
+```
+
+### 常见配置示例
+
+```gitignore
+# 锁文件
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+
+# 生成的文件
+*.min.js
+*.bundle.js
+dist/
+build/
+
+# 文档和资源
+*.md
+*.svg
+*.png
+
+# 测试快照
+__snapshots__/
+*.snap
 ```
 
 ---

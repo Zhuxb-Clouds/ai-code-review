@@ -1,0 +1,46 @@
+# AI Code Review 忽略文件配置
+# 语法类似 .gitignore，支持以下模式：
+# - 支持 * 通配符（匹配非 / 的任意字符）
+# - 支持 ** 通配符（匹配任意路径）
+# - 支持 ? 通配符（匹配单个字符）
+# - 以 / 开头表示从根目录匹配
+# - 以 / 结尾表示只匹配目录
+# - 以 ! 开头表示取消忽略
+# - 以 # 开头表示注释
+
+# 锁文件
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+
+# 生成的文件
+*.min.js
+*.min.css
+*.bundle.js
+dist/
+build/
+
+# 配置文件
+.env
+.env.*
+*.config.js
+*.config.ts
+
+# 文档和资源
+*.md
+*.txt
+*.svg
+*.png
+*.jpg
+*.ico
+
+# IDE 配置
+.vscode/
+.idea/
+
+# 测试快照
+__snapshots__/
+*.snap
+
+# 类型声明
+*.d.ts

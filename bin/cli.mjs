@@ -25,10 +25,9 @@ const command = process.argv[2];
 const HOOK_CONTENT = `#!/bin/sh
 
 # AI Code Review Hook
-# 将 Git 提供的参数传递给脚本
+# 使用 commit-msg hook 以支持 --no-verify 跳过
 # $1: 提交消息文件路径
-# $2: 提交来源 (message, template, merge, squash, commit)
-npx ai-review-hook "$1" "$2"
+npx ai-review-hook "$1"
 `;
 
 const ENV_EXAMPLE = `# AI 提供商选择 (openai / deepseek)
@@ -118,17 +117,32 @@ function setupHook() {
     fs.mkdirSync(huskyDir, { recursive: true });
   }
 
-  // 创建 prepare-commit-msg hook
-  const hookPath = path.join(huskyDir, "prepare-commit-msg");
+  // 创建 commit-msg hook（支持 --no-verify 跳过）
+  const hookPath = path.join(huskyDir, "commit-msg");
   fs.writeFileSync(hookPath, HOOK_CONTENT);
   fs.chmodSync(hookPath, "755");
-  console.log("✅ 创建 Git Hook: .husky/prepare-commit-msg");
+  console.log("✅ 创建 Git Hook: .husky/commit-msg");
+
+  // 删除旧的 prepare-commit-msg hook（如果存在）
+  const oldHookPath = path.join(huskyDir, "prepare-commit-msg");
+  if (fs.existsSync(oldHookPath)) {
+    fs.unlinkSync(oldHookPath);
+    console.log("🗑️  删除旧的 Hook: .husky/prepare-commit-msg");
+  }
 
   // 创建 .env.example
   const envExamplePath = path.join(projectRoot, ".env.example");
   if (!fs.existsSync(envExamplePath)) {
     fs.writeFileSync(envExamplePath, ENV_EXAMPLE);
     console.log("✅ 创建配置示例: .env.example");
+  }
+
+  // 创建 .reviewignore.example
+  const reviewIgnoreExampleSrc = path.join(__dirname, "..", ".reviewignore.example");
+  const reviewIgnoreExampleDest = path.join(projectRoot, ".reviewignore.example");
+  if (!fs.existsSync(reviewIgnoreExampleDest) && fs.existsSync(reviewIgnoreExampleSrc)) {
+    fs.copyFileSync(reviewIgnoreExampleSrc, reviewIgnoreExampleDest);
+    console.log("✅ 创建忽略规则示例: .reviewignore.example");
   }
 
   // 更新 .gitignore

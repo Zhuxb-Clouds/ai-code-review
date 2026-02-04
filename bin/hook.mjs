@@ -146,12 +146,151 @@ async function callWithRetry(fn, retries = CONFIG.maxRetries) {
   throw lastError;
 }
 
-const commitMsgFile = process.argv[2];
-const commitSource = process.argv[3]; // message, template, merge, squash, commit
+// 加载 .reviewignore 文件并解析为正则表达式
+function loadReviewIgnore() {
+  const ignorePatterns = [];
+  const ignoreFiles = [
+    path.join(projectRoot, ".reviewignore"),
+    path.join(process.cwd(), ".reviewignore"),
+  ];
 
-// 如果是 merge/squash 或已有 message，跳过处理
-if (["merge", "squash", "commit"].includes(commitSource)) {
-  console.log("ℹ️  跳过 AI Review（merge/squash/amend 提交）");
+  for (const ignoreFile of ignoreFiles) {
+    if (fs.existsSync(ignoreFile)) {
+      logVerbose(`加载 .reviewignore: ${ignoreFile}`);
+      const content = fs.readFileSync(ignoreFile, "utf-8");
+      content.split("\n").forEach((line) => {
+        const trimmed = line.trim();
+        // 跳过空行和注释
+        if (trimmed && !trimmed.startsWith("#")) {
+          ignorePatterns.push(trimmed);
+        }
+      });
+      break; // 只使用找到的第一个 .reviewignore
+    }
+  }
+
+  return ignorePatterns;
+}
+
+// 将 gitignore 风格的 pattern 转换为正则表达式
+function patternToRegex(pattern) {
+  // 处理否定模式
+  if (pattern.startsWith("!")) {
+    return { regex: patternToRegex(pattern.slice(1)).regex, negated: true };
+  }
+
+  let regexStr = pattern
+    // 转义正则特殊字符（除了 * 和 ?）
+    .replace(/[.+^${}()|[\]\\]/g, "\\$&")
+    // ** 匹配任意路径（包括 /）
+    .replace(/\*\*/g, "{{DOUBLE_STAR}}")
+    // * 匹配任意字符（不包括 /）
+    .replace(/\*/g, "[^/]*")
+    // ? 匹配单个字符
+    .replace(/\?/g, "[^/]")
+    // 还原 **
+    .replace(/{{DOUBLE_STAR}}/g, ".*");
+
+  // 如果 pattern 以 / 开头，匹配从根目录开始
+  if (pattern.startsWith("/")) {
+    regexStr = "^" + regexStr.slice(2); // 移除开头的 \\/
+  } else {
+    // 否则匹配任意位置
+    regexStr = "(^|/)" + regexStr;
+  }
+
+  // 如果 pattern 以 / 结尾，只匹配目录
+  if (pattern.endsWith("/")) {
+    regexStr = regexStr.slice(0, -2) + "(/|$)";
+  } else {
+    regexStr += "($|/)";
+  }
+
+  return { regex: new RegExp(regexStr), negated: false };
+}
+
+// 检查文件是否应该被忽略
+function shouldIgnoreFile(filePath, patterns) {
+  let ignored = false;
+
+  for (const pattern of patterns) {
+    const { regex, negated } = patternToRegex(pattern);
+    if (regex.test(filePath)) {
+      ignored = !negated;
+    }
+  }
+
+  return ignored;
+}
+
+// 过滤 diff，移除被忽略的文件
+function filterDiff(diff, ignorePatterns) {
+  if (ignorePatterns.length === 0) {
+    return diff;
+  }
+
+  const lines = diff.split("\n");
+  const filteredLines = [];
+  let currentFile = null;
+  let skipCurrentFile = false;
+  let ignoredFiles = [];
+
+  for (const line of lines) {
+    // 检测 diff 文件头
+    const diffMatch = line.match(/^diff --git a\/(.+) b\/(.+)$/);
+    if (diffMatch) {
+      currentFile = diffMatch[2];
+      skipCurrentFile = shouldIgnoreFile(currentFile, ignorePatterns);
+      if (skipCurrentFile) {
+        ignoredFiles.push(currentFile);
+      }
+    }
+
+    if (!skipCurrentFile) {
+      filteredLines.push(line);
+    }
+  }
+
+  if (ignoredFiles.length > 0) {
+    logVerbose(`跳过的文件 (${ignoredFiles.length}): ${ignoredFiles.join(", ")}`);
+  }
+
+  return filteredLines.join("\n");
+}
+
+const commitMsgFile = process.argv[2];
+
+// 检查是否是 merge 提交（通过检查 MERGE_HEAD 文件）
+function isMergeCommit() {
+  try {
+    const gitDir = execSync("git rev-parse --git-dir", { encoding: "utf-8" }).trim();
+    return fs.existsSync(path.join(gitDir, "MERGE_HEAD"));
+  } catch {
+    return false;
+  }
+}
+
+// 检查 commit message 是否已经有内容（非模板）
+function hasExistingMessage() {
+  if (!commitMsgFile || !fs.existsSync(commitMsgFile)) {
+    return false;
+  }
+  const content = fs.readFileSync(commitMsgFile, "utf-8");
+  // 过滤掉注释行和空行
+  const meaningfulLines = content
+    .split("\n")
+    .filter((line) => !line.startsWith("#") && line.trim());
+  return meaningfulLines.length > 0;
+}
+
+// 如果是 merge 提交或已有 message，跳过处理
+if (isMergeCommit()) {
+  console.log("ℹ️  跳过 AI Review（merge 提交）");
+  process.exit(0);
+}
+
+if (hasExistingMessage()) {
+  logVerbose("检测到已有 commit message，跳过 AI 生成");
   process.exit(0);
 }
 
@@ -231,10 +370,16 @@ async function runAIReview() {
   }
 
   try {
+    // 0. 加载 .reviewignore 配置
+    const ignorePatterns = loadReviewIgnore();
+    if (ignorePatterns.length > 0) {
+      logVerbose(`已加载 ${ignorePatterns.length} 个忽略规则`);
+    }
+
     // 1. 获取暂存区 Diff
     logVerbose("正在获取暂存区 Diff...");
     const diffTimer = logTime("获取 Diff");
-    const diff = execSync("git diff --cached", { encoding: "utf-8", maxBuffer: 10 * 1024 * 1024 });
+    let diff = execSync("git diff --cached", { encoding: "utf-8", maxBuffer: 10 * 1024 * 1024 });
     logTimeEnd(diffTimer);
 
     if (!diff.trim()) {
@@ -242,7 +387,17 @@ async function runAIReview() {
       process.exit(0);
     }
 
-    logVerbose(`Diff 大小: ${(diff.length / 1000).toFixed(2)}KB`);
+    logVerbose(`原始 Diff 大小: ${(diff.length / 1000).toFixed(2)}KB`);
+
+    // 1.5 应用 .reviewignore 过滤
+    diff = filterDiff(diff, ignorePatterns);
+
+    if (!diff.trim()) {
+      console.log("ℹ️  所有更改的文件都在 .reviewignore 中，跳过 AI Review");
+      process.exit(0);
+    }
+
+    logVerbose(`过滤后 Diff 大小: ${(diff.length / 1000).toFixed(2)}KB`);
 
     // 2. 运行构建检查
     if (!CONFIG.skipBuild) {
@@ -319,11 +474,21 @@ async function runAIReview() {
 
     // 5. 处理结果
     if (result.is_passed) {
-      fs.writeFileSync(commitMsgFile, result.message);
+      // 构建 commit message，将 reason 作为注释附加
+      let commitMessage = result.message;
+      if (result.reason && result.reason.trim()) {
+        // 将 reason 转换为 Git 注释格式（每行以 # 开头）
+        const reasonLines = result.reason
+          .split("\n")
+          .map((line) => `# ${line}`)
+          .join("\n");
+        commitMessage += `\n\n# --- AI Review 建议 ---\n${reasonLines}`;
+      }
+      fs.writeFileSync(commitMsgFile, commitMessage);
       console.log("✅ AI Review 通过");
       console.log(`📝 生成的提交信息: ${result.message}`);
-      if (result.suggestions) {
-        console.log(`💡 建议: ${result.suggestions}`);
+      if (result.reason && result.reason.trim()) {
+        console.log(`💡 建议: ${result.reason}`);
       }
       logTimeEnd(totalTimer);
       process.exit(0); // 确保成功时返回退出码 0
