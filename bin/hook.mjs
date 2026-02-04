@@ -259,38 +259,25 @@ function filterDiff(diff, ignorePatterns) {
 }
 
 const commitMsgFile = process.argv[2];
+const commitSource = process.argv[3]; // message, template, merge, squash, commit
 
-// 检查是否是 merge 提交（通过检查 MERGE_HEAD 文件）
-function isMergeCommit() {
-  try {
-    const gitDir = execSync("git rev-parse --git-dir", { encoding: "utf-8" }).trim();
-    return fs.existsSync(path.join(gitDir, "MERGE_HEAD"));
-  } catch {
-    return false;
-  }
-}
+// 检查是否应该跳过 AI Review
+// commitSource 说明：
+// - "message": 使用 -m 或 -F 提供了消息
+// - "template": 使用了模板
+// - "merge": merge 提交
+// - "squash": squash 提交
+// - "commit": 使用 -c/-C/--amend
 
-// 检查 commit message 是否已经有内容（非模板）
-function hasExistingMessage() {
-  if (!commitMsgFile || !fs.existsSync(commitMsgFile)) {
-    return false;
-  }
-  const content = fs.readFileSync(commitMsgFile, "utf-8");
-  // 过滤掉注释行和空行
-  const meaningfulLines = content
-    .split("\n")
-    .filter((line) => !line.startsWith("#") && line.trim());
-  return meaningfulLines.length > 0;
-}
-
-// 如果是 merge 提交或已有 message，跳过处理
-if (isMergeCommit()) {
-  console.log("ℹ️  跳过 AI Review（merge 提交）");
-  process.exit(0);
-}
-
-if (hasExistingMessage()) {
-  logVerbose("检测到已有 commit message，跳过 AI 生成");
+// 如果使用了 -m 提供消息，或者是 merge/squash/amend，跳过 AI 生成
+if (["message", "merge", "squash", "commit"].includes(commitSource)) {
+  const reasons = {
+    message: "使用了 -m 参数",
+    merge: "merge 提交",
+    squash: "squash 提交",
+    commit: "amend 提交",
+  };
+  console.log(`ℹ️  跳过 AI Review（${reasons[commitSource] || commitSource}）`);
   process.exit(0);
 }
 

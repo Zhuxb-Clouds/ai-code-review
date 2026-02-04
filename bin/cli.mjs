@@ -25,9 +25,10 @@ const command = process.argv[2];
 const HOOK_CONTENT = `#!/bin/sh
 
 # AI Code Review Hook
-# 使用 commit-msg hook 以支持 --no-verify 跳过
 # $1: 提交消息文件路径
-npx ai-review-hook "$1"
+# $2: 提交来源 (message, template, merge, squash, commit)
+# 当使用 git commit -m "xxx" 时，$2 为 "message"，自动跳过 AI 生成
+npx ai-review-hook "$1" "$2"
 `;
 
 const ENV_EXAMPLE = `# AI 提供商选择 (openai / deepseek)
@@ -117,17 +118,17 @@ function setupHook() {
     fs.mkdirSync(huskyDir, { recursive: true });
   }
 
-  // 创建 commit-msg hook（支持 --no-verify 跳过）
-  const hookPath = path.join(huskyDir, "commit-msg");
+  // 创建 prepare-commit-msg hook
+  const hookPath = path.join(huskyDir, "prepare-commit-msg");
   fs.writeFileSync(hookPath, HOOK_CONTENT);
   fs.chmodSync(hookPath, "755");
-  console.log("✅ 创建 Git Hook: .husky/commit-msg");
+  console.log("✅ 创建 Git Hook: .husky/prepare-commit-msg");
 
-  // 删除旧的 prepare-commit-msg hook（如果存在）
-  const oldHookPath = path.join(huskyDir, "prepare-commit-msg");
+  // 删除旧的 commit-msg hook（如果存在）
+  const oldHookPath = path.join(huskyDir, "commit-msg");
   if (fs.existsSync(oldHookPath)) {
     fs.unlinkSync(oldHookPath);
-    console.log("🗑️  删除旧的 Hook: .husky/prepare-commit-msg");
+    console.log("🗑️  删除旧的 Hook: .husky/commit-msg");
   }
 
   // 创建 .env.example

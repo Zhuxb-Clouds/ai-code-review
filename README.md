@@ -19,10 +19,10 @@
 ## 🛠️ 技术架构
 
 ```
-git commit → Husky (commit-msg) → ai-review-hook → AI API (OpenAI/DeepSeek)
-                                               ↓
-                                   ✅ 通过：自动填充 Commit Message
-                                   ❌ 失败：拦截提交并输出建议
+git commit → Husky (prepare-commit-msg) → ai-review-hook → AI API (OpenAI/DeepSeek)
+                                                 ↓
+                                    ✅ 通过：自动填充 Commit Message
+                                    ❌ 失败：拦截提交并输出建议
 ```
 
 ---
@@ -93,7 +93,7 @@ git commit
 ```
 your-project/
 ├── .husky/
-│   └── commit-msg              # Git Hook（自动创建）
+│   └── prepare-commit-msg     # Git Hook（自动创建）
 ├── .env                       # API Key（自己创建，不要提交！）
 ├── .env.example               # 配置示例（自动创建）
 ├── .reviewignore              # AI 审查忽略文件（可选）
@@ -169,14 +169,15 @@ npx ai-review setup
 npx ai-review help
 ```
 
-### 特殊情况
+### 跳过 AI Review
 
 ```bash
-# 跳过 AI 审查（紧急情况）
-git commit --no-verify -m "hotfix: urgent fix"
+# 使用 -m 参数时自动跳过 AI 生成（直接使用你的消息）
+git commit -m "feat: your message"
 
-# 带 -m 提交时仍会进行审查，但会使用你提供的消息
-git commit -m "your message"
+# merge/squash/amend 提交也会自动跳过
+git merge feature-branch
+git commit --amend
 ```
 
 ---
