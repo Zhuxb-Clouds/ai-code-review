@@ -77,8 +77,6 @@ const CONFIG = {
   model: aiConfig.model,
   maxDiffSize: parseInt(process.env.AI_REVIEW_MAX_DIFF_SIZE) || 15000,
   timeout: parseInt(process.env.AI_REVIEW_TIMEOUT) || 30000,
-  skipBuild: process.env.AI_REVIEW_SKIP_BUILD === "true",
-  buildCommand: process.env.AI_REVIEW_BUILD_COMMAND || "npm run build",
   verbose: process.env.AI_REVIEW_VERBOSE === "true",
   maxRetries: parseInt(process.env.AI_REVIEW_MAX_RETRIES) || 3,
   retryDelay: parseInt(process.env.AI_REVIEW_RETRY_DELAY) || 1000,
@@ -351,7 +349,6 @@ async function runAIReview() {
   logVerbose(`模型: ${CONFIG.model}`);
   logVerbose(`最大 Diff 大小: ${CONFIG.maxDiffSize}`);
   logVerbose(`超时时间: ${CONFIG.timeout}ms`);
-  logVerbose(`跳过构建: ${CONFIG.skipBuild}`);
   if (process.env.OPENAI_BASE_URL) {
     logVerbose(`API Base URL: ${process.env.OPENAI_BASE_URL}`);
   }
@@ -386,28 +383,7 @@ async function runAIReview() {
 
     logVerbose(`过滤后 Diff 大小: ${(diff.length / 1000).toFixed(2)}KB`);
 
-    // 2. 运行构建检查
-    if (!CONFIG.skipBuild) {
-      console.log(`🔨 正在运行构建检查: ${CONFIG.buildCommand}`);
-      const buildTimer = logTime("构建检查");
-      try {
-        execSync(CONFIG.buildCommand, {
-          cwd: projectRoot,
-          stdio: "inherit",
-          encoding: "utf-8",
-        });
-        console.log("✅ 构建通过");
-        logTimeEnd(buildTimer);
-      } catch (buildError) {
-        console.error("❌ 构建失败，请修复后重新提交");
-        console.error("\n使用 git commit --no-verify 可跳过检查");
-        process.exit(1);
-      }
-    } else {
-      logVerbose("跳过构建检查 (AI_REVIEW_SKIP_BUILD=true)");
-    }
-
-    // 3. 检查 Diff 大小
+    // 2. 检查 Diff 大小
     if (diff.length > CONFIG.maxDiffSize) {
       console.warn(`⚠️  Diff 过大 (${(diff.length / 1000).toFixed(1)}KB)，建议分批提交`);
       console.warn(`   当前限制: ${CONFIG.maxDiffSize / 1000}KB，超出部分将被截断`);

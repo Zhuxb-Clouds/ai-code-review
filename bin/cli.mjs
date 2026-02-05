@@ -27,7 +27,15 @@ const HOOK_CONTENT = `#!/bin/sh
 # AI Code Review Hook
 # $1: 提交消息文件路径
 # $2: 提交来源 (message, template, merge, squash, commit)
-# 当使用 git commit -m "xxx" 时，$2 为 "message"，自动跳过 AI 生成
+
+# ======== 可选：构建检查 ========
+# 取消下面的注释来启用构建检查，可自行修改命令
+# echo "🔨 正在运行构建检查..."
+# npm run build || exit 1
+# echo "✅ 构建通过"
+# ================================
+
+# AI 代码审查和 commit message 生成
 npx ai-review-hook "$1" "$2"
 `;
 
@@ -51,8 +59,6 @@ OPENAI_API_KEY=sk-your-openai-api-key-here
 # AI_REVIEW_MAX_RETRIES=3
 # AI_REVIEW_RETRY_DELAY=1000
 # AI_REVIEW_VERBOSE=false
-# AI_REVIEW_SKIP_BUILD=false
-# AI_REVIEW_BUILD_COMMAND=npm run build
 `;
 
 function showHelp() {
