@@ -39,7 +39,7 @@ const HOOK_CONTENT = `#!/bin/sh
 npx ai-review-hook "$1" "$2"
 `;
 
-const ENV_EXAMPLE = `# AI 提供商选择 (openai / deepseek)
+const ENV_EXAMPLE = `# AI 提供商选择 (openai / deepseek / gemini)
 # AI_PROVIDER=openai
 
 # OpenAI API 配置
@@ -49,6 +49,10 @@ OPENAI_API_KEY=sk-your-openai-api-key-here
 
 # DeepSeek API 配置 (使用 AI_PROVIDER=deepseek)
 # DEEPSEEK_API_KEY=sk-your-deepseek-api-key-here
+
+# Gemini API 配置 (使用 AI_PROVIDER=gemini，通过 OpenAI 兼容层调用)
+# GEMINI_API_KEY=your-gemini-api-key-here
+# OPENAI_MODEL=gemini-2.5-flash
 
 # 代理配置 (可选)
 # HTTPS_PROXY=http://127.0.0.1:7890
@@ -75,7 +79,7 @@ AI Code Review CLI
   2. 正常使用 git add && git commit 即可
 
 跳过检查:
-  git commit --no-verify -m "your message"
+  git commit -m "your message"
 `);
 }
 

@@ -189,6 +189,11 @@ const tests = {
       defaultModel: "deepseek-chat",
       envKey: "DEEPSEEK_API_KEY",
     },
+    gemini: {
+      baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/",
+      defaultModel: "gemini-2.5-flash",
+      envKey: "GEMINI_API_KEY",
+    },
   },
 
   // 获取当前 AI 配置
@@ -263,13 +268,13 @@ const tests = {
         logVerbose(`   已创建代理 agent`);
       }
 
-      // 创建 OpenAI 客户端实例
+      // 创建 OpenAI 兼容客户端实例
       log("\n   1️⃣  初始化 AI 客户端...", "blue");
       const openai = new OpenAI({
         apiKey: aiConfig.apiKey,
         baseURL: aiConfig.baseURL,
         timeout: timeout,
-        maxRetries: 0, // 禁用自动重试，由我们控制
+        maxRetries: 0,
         httpAgent: httpAgent,
       });
 
@@ -297,7 +302,7 @@ const tests = {
         log("   3️⃣  解析响应...", "blue");
         const response = completion.choices[0]?.message?.content || "";
 
-        log("\n✅ OpenAI API 连接成功！", "green");
+        log(`\n✅ ${aiConfig.provider.toUpperCase()} API 连接成功！`, "green");
         log(`   实际模型: ${completion.model}`, "blue");
         log(`   响应内容: ${response}`, "blue");
         log(`   响应时间: ${elapsed}ms`, "blue");

@@ -4,7 +4,7 @@
 
 A Git Hooks integration solution built with Node.js and OpenAI-compatible APIs. It automatically performs code reviews during `git commit` and generates commit messages that follow the [Conventional Commits](https://www.conventionalcommits.org/) specification based on your code changes.
 
-**Supported AI Providers**: OpenAI, DeepSeek, and more.
+**Supported AI Providers**: OpenAI, DeepSeek, Gemini and more.
 
 ## 🚀 Key Features
 
@@ -13,7 +13,7 @@ A Git Hooks integration solution built with Node.js and OpenAI-compatible APIs. 
 * **Seamless Integration**: Powered by Git Hooks; requires no changes to your existing development workflow.
 * **Cost Efficiency**: Supports diff size limits to prevent excessive Token usage.
 * **One-Click Installation**: Easily installable as an npm package in any project.
-* **Multi-Provider Support**: Compatible with OpenAI, DeepSeek, and other OpenAI-compliant APIs.
+* **Multi-Provider Support**: Compatible with OpenAI, DeepSeek, Gemini and other OpenAI-compliant APIs.
 * **Proxy Support**: Full support for HTTP/HTTPS/SOCKS5 proxies.
 
 ---
@@ -21,7 +21,7 @@ A Git Hooks integration solution built with Node.js and OpenAI-compatible APIs. 
 ## 🛠️ Technical Architecture
 
 ```
-git commit → Husky (prepare-commit-msg) → ai-review-hook → AI API (OpenAI/DeepSeek)
+git commit → Husky (prepare-commit-msg) → ai-review-hook → AI API (OpenAI/DeepSeek/Gemini)
                                                  ↓
                                     ✅ Pass: Auto-fill Commit Message
                                     ❌ Fail: Block commit & output suggestions
@@ -67,6 +67,15 @@ OPENAI_MODEL=gpt-4o-mini
 AI_PROVIDER=deepseek
 DEEPSEEK_API_KEY=sk-your-deepseek-key-here
 # OPENAI_MODEL=deepseek-chat  # Optional, defaults to deepseek-chat
+
+```
+
+#### Using Gemini
+
+```bash
+AI_PROVIDER=gemini
+GEMINI_API_KEY=your-gemini-api-key-here
+# OPENAI_MODEL=gemini-2.5-flash  # Optional, defaults to gemini-2.5-flash
 
 ```
 
@@ -203,13 +212,14 @@ Configure your setup via environment variables in the `.env` file:
 
 ### Base Configuration
 
-| Variable           | Default  | Description                                               |
-| ------------------ | -------- | --------------------------------------------------------- |
-| `AI_PROVIDER`      | `openai` | AI Provider: `openai` or `deepseek`                       |
-| `OPENAI_API_KEY`   | -        | OpenAI API Key (Required if using OpenAI)                 |
-| `DEEPSEEK_API_KEY` | -        | DeepSeek API Key (Required if using DeepSeek)             |
-| `OPENAI_BASE_URL`  | Auto     | Custom API endpoint URL                                   |
-| `OPENAI_MODEL`     | Auto     | Model name (OpenAI: gpt-4o-mini, DeepSeek: deepseek-chat) |
+| Variable           | Default  | Description                                                                         |
+| ------------------ | -------- | ----------------------------------------------------------------------------------- |
+| `AI_PROVIDER`      | `openai` | AI Provider: `openai`, `deepseek` or `gemini`                                       |
+| `OPENAI_API_KEY`   | -        | OpenAI API Key (Required if using OpenAI)                                           |
+| `DEEPSEEK_API_KEY` | -        | DeepSeek API Key (Required if using DeepSeek)                                       |
+| `GEMINI_API_KEY`   | -        | Gemini API Key (Required if using Gemini)                                           |
+| `OPENAI_BASE_URL`  | Auto     | Custom API endpoint URL                                                             |
+| `OPENAI_MODEL`     | Auto     | Model name (OpenAI: gpt-4o-mini, DeepSeek: deepseek-chat, Gemini: gemini-2.5-flash) |
 
 ### Network Configuration
 

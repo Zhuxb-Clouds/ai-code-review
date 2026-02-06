@@ -54,6 +54,11 @@ const AI_PROVIDERS = {
     defaultModel: "deepseek-chat",
     envKey: "DEEPSEEK_API_KEY",
   },
+  gemini: {
+    baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/",
+    defaultModel: "gemini-2.5-flash",
+    envKey: "GEMINI_API_KEY",
+  },
   // 可扩展更多提供商
 };
 
@@ -306,7 +311,7 @@ function getProxyAgent() {
   return undefined;
 }
 
-// 创建 OpenAI 客户端（支持自定义配置和代理）
+// 创建 OpenAI 兼容客户端（OpenAI / DeepSeek / Gemini 均走此通道）
 const httpAgent = getProxyAgent();
 const openai = new OpenAI({
   apiKey: aiConfig.apiKey,

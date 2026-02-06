@@ -4,7 +4,7 @@
 
 基于 Node.js 和 OpenAI-compatible API 的 Git Hooks 集成方案。在执行 `git commit` 时自动进行代码审查，并根据 Diff 自动生成符合 [Conventional Commits](https://www.conventionalcommits.org/) 规范的提交信息。
 
-**支持的 AI 提供商**: OpenAI, DeepSeek
+**支持的 AI 提供商**: OpenAI, DeepSeek, Gemini
 
 ## 🚀 核心特性
 
@@ -13,7 +13,7 @@
 - **无感集成**：通过 Git Hooks 实现，无需改变原有开发习惯
 - **成本可控**：支持 Diff 大小限制，避免 Token 浪费
 - **一键安装**：作为 npm 包安装到任何项目
-- **多提供商支持**：支持 OpenAI、DeepSeek 等兼容 API
+- **多提供商支持**：支持 OpenAI、DeepSeek、Gemini 等
 - **代理支持**：支持 HTTP/HTTPS/SOCKS5 代理
 
 ---
@@ -21,7 +21,7 @@
 ## 🛠️ 技术架构
 
 ```
-git commit → Husky (prepare-commit-msg) → ai-review-hook → AI API (OpenAI/DeepSeek)
+git commit → Husky (prepare-commit-msg) → ai-review-hook → AI API (OpenAI/DeepSeek/Gemini)
                                                  ↓
                                     ✅ 通过：自动填充 Commit Message
                                     ❌ 失败：拦截提交并输出建议
@@ -63,6 +63,14 @@ OPENAI_MODEL=gpt-4o-mini
 AI_PROVIDER=deepseek
 DEEPSEEK_API_KEY=sk-your-deepseek-key-here
 # OPENAI_MODEL=deepseek-chat  # 可选，默认 deepseek-chat
+```
+
+#### 使用 Gemini
+
+```bash
+AI_PROVIDER=gemini
+GEMINI_API_KEY=your-gemini-api-key-here
+# OPENAI_MODEL=gemini-2.5-flash  # 可选，默认 gemini-2.5-flash
 ```
 
 #### 使用代理
@@ -190,13 +198,14 @@ git commit --amend
 
 ### 基础配置
 
-| 环境变量           | 默认值   | 说明                                                             |
-| ------------------ | -------- | ---------------------------------------------------------------- |
-| `AI_PROVIDER`      | `openai` | AI 提供商：`openai` 或 `deepseek`                                |
-| `OPENAI_API_KEY`   | -        | OpenAI API Key（使用 OpenAI 时必填）                             |
-| `DEEPSEEK_API_KEY` | -        | DeepSeek API Key（使用 DeepSeek 时必填）                         |
-| `OPENAI_BASE_URL`  | 自动设置 | 自定义 API 地址（可覆盖默认）                                    |
-| `OPENAI_MODEL`     | 自动设置 | 模型名称（OpenAI 默认 gpt-4o-mini，DeepSeek 默认 deepseek-chat） |
+| 环境变量           | 默认值   | 说明                                                                                           |
+| ------------------ | -------- | ---------------------------------------------------------------------------------------------- |
+| `AI_PROVIDER`      | `openai` | AI 提供商：`openai`、`deepseek` 或 `gemini`                                                    |
+| `OPENAI_API_KEY`   | -        | OpenAI API Key（使用 OpenAI 时必填）                                                           |
+| `DEEPSEEK_API_KEY` | -        | DeepSeek API Key（使用 DeepSeek 时必填）                                                       |
+| `GEMINI_API_KEY`   | -        | Gemini API Key（使用 Gemini 时必填）                                                           |
+| `OPENAI_BASE_URL`  | 自动设置 | 自定义 API 地址（可覆盖默认）                                                                  |
+| `OPENAI_MODEL`     | 自动设置 | 模型名称（OpenAI 默认 gpt-4o-mini，DeepSeek 默认 deepseek-chat，Gemini 默认 gemini-2.5-flash） |
 
 ### 网络配置
 
