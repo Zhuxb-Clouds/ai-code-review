@@ -344,6 +344,9 @@ const SYSTEM_PROMPT = `
 3. **输出要求**：
    - 必须严格返回 JSON 格式，不得包含任何 Markdown 格式说明或其他解释文字。
    - 语言：*reason* 部分使用中文。
+   - *reason* 如有多条建议，请用换行分点列出，每点以序号开头，例如：
+     "1. 建议xxx\n2. 建议yyy\n3. 建议zzz"
+   - 如无建议，*reason* 为空字符串。
 
 `;
 
@@ -417,7 +420,7 @@ async function runAIReview() {
               请按此 JSON 结构返回：
               {
                 "is_passed": boolean,
-                "reason": "此处填写改进建议或未通过的具体原因，如无建议可为空字符串",
+                "reason": "多条建议请用换行分点列出，如：1. xxx\n2. yyy，无建议则为空字符串",
                 "message": "此处填写生成的 Conventional Commit 消息"
               }
             `,
@@ -456,7 +459,10 @@ async function runAIReview() {
       console.log("✅ AI Review 通过");
       console.log(`📝 生成的提交信息: ${result.message}`);
       if (result.reason && result.reason.trim()) {
-        console.log(`💡 建议: ${result.reason}`);
+        console.log(`💡 建议:`);
+        result.reason.split("\n").forEach((line) => {
+          if (line.trim()) console.log(`   ${line.trim()}`);
+        });
       }
       logTimeEnd(totalTimer);
       process.exit(0); // 确保成功时返回退出码 0
